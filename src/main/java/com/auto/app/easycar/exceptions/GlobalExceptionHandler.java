@@ -61,6 +61,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "La solicitud contiene datos invalidos", request, fieldErrors);
     }
 
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleRecursoNoEncontrado(
+            org.springframework.web.servlet.resource.NoResourceFoundException ex, HttpServletRequest request) {
+        return build(HttpStatus.NOT_FOUND, "No existe el recurso " + request.getRequestURI(), request, null);
+    }
+
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> handleNotReadable(
             org.springframework.http.converter.HttpMessageNotReadableException ex, HttpServletRequest request) {

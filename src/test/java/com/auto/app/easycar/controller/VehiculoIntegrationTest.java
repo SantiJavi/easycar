@@ -76,6 +76,37 @@ class VehiculoIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void permiteCorregirElKilometrajeALaBaja() throws Exception {
+        String token = tokenNuevoUsuario();
+        String placa = placaUnica();
+
+        String body = mockMvc.perform(post("/api/vehiculos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"placa":"%s","nombre":"Correccion","marca":"Renault","kilometrajeActual":125000}
+                                """.formatted(placa)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.kilometrajeActual").value(125000))
+                .andReturn().getResponse().getContentAsString();
+        String id = JsonPath.read(body, "$.id");
+
+        // Un error de captura se corrige bajando el kilometraje: el API lo acepta.
+        mockMvc.perform(patch("/api/vehiculos/" + id + "/kilometraje")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"kilometrajeActual\":124500}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.kilometrajeActual").value(124500))
+                .andExpect(jsonPath("$.historial").isEmpty());
+
+        // Persistido, no solo devuelto en la respuesta.
+        mockMvc.perform(get("/api/vehiculos/" + id).header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.kilometrajeActual").value(124500));
+    }
+
+    @Test
     void cicloCrudCompletoDeVehiculo() throws Exception {
         String token = tokenNuevoUsuario();
         String placa = placaUnica();

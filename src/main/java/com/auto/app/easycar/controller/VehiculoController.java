@@ -117,7 +117,9 @@ public class VehiculoController {
     }
 
     @Operation(summary = "Actualizar solo el kilometraje",
-            description = "No crea registros de historial ni toca los mantenimientos programados")
+            description = "No crea registros de historial ni toca los mantenimientos programados. "
+                    + "Acepta cualquier valor no negativo, incluso menor al anterior: sirve para "
+                    + "corregir un error de captura.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Kilometraje actualizado"),
             @ApiResponse(responseCode = "400", description = "Kilometraje invalido",

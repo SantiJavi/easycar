@@ -1,0 +1,12 @@
+.git
+.gitignore
+.gradle
+build
+.idea
+*.iml
+*.iws
+.DS_Store
+src/.DS_Store
+src/test
+Dockerfile
+README.md
