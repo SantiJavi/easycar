@@ -15,4 +15,6 @@ public interface HistorialMantenimientosRepository extends JpaRepository<Histori
     List<HistorialMantenimientos> findByFkUserHistorial_Id(UUID usuarioId);
 
     List<HistorialMantenimientos> findByFkTipoHistorial_Id(Long tipoMantenimientoId);
+
+    List<HistorialMantenimientos> findByFkVehiculoHistorial_IdIn(java.util.Collection<UUID> vehiculoIds);
 }

@@ -14,6 +14,9 @@ public record UserVehiculoResponse(
         UUID usuarioId,
 
         @Schema(description = "Identificador del vehiculo")
-        UUID vehiculoId
+        UUID vehiculoId,
+
+        @Schema(description = "PROPIETARIO, COLABORADOR o LECTURA", example = "PROPIETARIO")
+        String rol
 ) {
 }

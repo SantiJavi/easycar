@@ -23,6 +23,12 @@ public record TipoMantenimientoResponse(
         @Schema(description = "Kilometraje objetivo", example = "50000")
         Integer kilometrajeObjetivo,
 
+        @Schema(description = "Frecuencia en kilometros", example = "5000")
+        Integer frecuenciaKm,
+
+        @Schema(description = "Frecuencia en meses", example = "6")
+        Integer frecuenciaMeses,
+
         @Schema(description = "Tipo de vista", example = "1")
         Integer tipoVista,
 

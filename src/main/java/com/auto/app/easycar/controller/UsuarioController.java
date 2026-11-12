@@ -4,6 +4,7 @@ import com.auto.app.easycar.dto.UsuarioRequest;
 import com.auto.app.easycar.dto.UsuarioResponse;
 import com.auto.app.easycar.dto.UsuarioUpdateRequest;
 import com.auto.app.easycar.exceptions.ApiError;
+import com.auto.app.easycar.services.RegistroPrivadoService;
 import com.auto.app.easycar.services.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,9 +37,11 @@ import java.util.UUID;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+    private final RegistroPrivadoService registroPrivadoService;
 
-    public UsuarioController(UsuarioService usuarioService) {
+    public UsuarioController(UsuarioService usuarioService, RegistroPrivadoService registroPrivadoService) {
         this.usuarioService = usuarioService;
+        this.registroPrivadoService = registroPrivadoService;
     }
 
     @Operation(summary = "Listar usuarios")
@@ -75,17 +79,23 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.findByEmail(email));
     }
 
-    @Operation(summary = "Crear usuario",
-            description = "La contrasena se almacena cifrada con BCrypt")
+    @Operation(summary = "Crear usuario (restringido)",
+            description = "La contrasena se almacena cifrada con BCrypt. Requiere el header "
+                    + "X-Codigo-Registro con el codigo configurado en el servidor")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Usuario creado"),
             @ApiResponse(responseCode = "400", description = "Datos invalidos",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "403", description = "Codigo de registro ausente o invalido",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
             @ApiResponse(responseCode = "409", description = "El email ya esta registrado",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     @PostMapping
-    public ResponseEntity<UsuarioResponse> create(@Valid @RequestBody UsuarioRequest request) {
+    public ResponseEntity<UsuarioResponse> create(
+            @RequestHeader(value = "X-Codigo-Registro", required = false) String codigo,
+            @Valid @RequestBody UsuarioRequest request) {
+        registroPrivadoService.exigirCodigoValido(codigo);
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.create(request));
     }
 

@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public abstract class AbstractIntegrationTest {
 
     protected static final String PASSWORD = "Easycar123";
+    protected static final String CODIGO_REGISTRO = "codigo-de-prueba";
 
     @Autowired
     protected MockMvc mockMvc;
@@ -35,8 +36,8 @@ public abstract class AbstractIntegrationTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"usuario":"tester","email":"%s","password":"%s"}
-                                """.formatted(email, PASSWORD)))
+                                {"usuario":"tester","email":"%s","password":"%s","codigo":"%s"}
+                                """.formatted(email, PASSWORD, CODIGO_REGISTRO)))
                 .andExpect(status().isCreated());
         return email;
     }

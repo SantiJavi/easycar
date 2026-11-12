@@ -1,8 +1,11 @@
 package com.auto.app.easycar.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
@@ -28,8 +31,18 @@ public record TipoMantenimientoRequest(
         @PositiveOrZero(message = "El kilometraje objetivo no puede ser negativo")
         Integer kilometrajeObjetivo,
 
-        @Schema(description = "Tipo de vista del mantenimiento (columna de 2 digitos)", example = "1")
+        @Schema(description = "Frecuencia en kilometros del mantenimiento", example = "5000")
+        @Positive(message = "La frecuencia en kilometros debe ser mayor que 0")
+        Integer frecuenciaKm,
+
+        @Schema(description = "Frecuencia en meses del mantenimiento", example = "6")
+        @Positive(message = "La frecuencia en meses debe ser mayor que 0")
+        Integer frecuenciaMeses,
+
+        @Schema(description = "Tipo de vista del mantenimiento: 1 = por kilometraje, 2 = por fecha", example = "1")
         @NotNull(message = "El tipo de vista es obligatorio")
+        @Min(value = 1, message = "El tipo de vista debe ser 1 (kilometraje) o 2 (fecha)")
+        @Max(value = 2, message = "El tipo de vista debe ser 1 (kilometraje) o 2 (fecha)")
         Integer tipoVista,
 
         @Schema(description = "Identificador del vehiculo asociado")

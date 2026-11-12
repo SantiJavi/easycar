@@ -28,6 +28,10 @@ public class TipoMantenimiento {
     @Column(length = 255)
     private String observacion;
     private Integer kilometrajeObjetivo;
+    /** Cada cuantos kilometros corresponde el mantenimiento (tipoVista = 1). */
+    private Integer frecuenciaKm;
+    /** Cada cuantos meses corresponde el mantenimiento (tipoVista = 2). */
+    private Integer frecuenciaMeses;
     @Column(length = 2,nullable = false)
     private Integer tipoVista;
     @JsonIgnore

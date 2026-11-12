@@ -73,8 +73,8 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"usuario":"otro","email":"%s","password":"%s"}
-                                """.formatted(email, PASSWORD)))
+                                {"usuario":"otro","email":"%s","password":"%s","codigo":"%s"}
+                                """.formatted(email, PASSWORD, CODIGO_REGISTRO)))
                 .andExpect(status().isConflict());
     }
 
@@ -89,6 +89,50 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.fieldErrors.email").exists())
                 .andExpect(jsonPath("$.fieldErrors.password").exists())
                 .andExpect(jsonPath("$.fieldErrors.usuario").exists());
+    }
+
+    @Test
+    void registroSinCodigoDevuelve400ConErrorEnElCampo() throws Exception {
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"usuario":"otro","email":"%s","password":"%s"}
+                                """.formatted(emailUnico(), PASSWORD)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.codigo").exists());
+    }
+
+    @Test
+    void registroConCodigoIncorrectoDevuelve403() throws Exception {
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"usuario":"otro","email":"%s","password":"%s","codigo":"otro-codigo"}
+                                """.formatted(emailUnico(), PASSWORD)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message", containsString("no es valido")));
+    }
+
+    @Test
+    void crearUsuarioPorApiTambienExigeElCodigo() throws Exception {
+        String token = tokenNuevoUsuario();
+
+        mockMvc.perform(post("/api/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"usuario":"otro","email":"%s","password":"%s"}
+                                """.formatted(emailUnico(), PASSWORD)))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/usuarios")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .header("X-Codigo-Registro", CODIGO_REGISTRO)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"usuario":"otro","email":"%s","password":"%s"}
+                                """.formatted(emailUnico(), PASSWORD)))
+                .andExpect(status().isCreated());
     }
 
     @Test

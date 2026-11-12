@@ -38,6 +38,9 @@ class UserVehiculoServiceImplTest {
     @Mock
     private VehiculoRepository vehiculoRepository;
 
+    @Mock
+    private AccesoVehiculoService acceso;
+
     @InjectMocks
     private UserVehiculoServiceImpl service;
 
@@ -71,6 +74,9 @@ class UserVehiculoServiceImplTest {
     void rechazaAsociacionDuplicada() {
         UUID usuarioId = UUID.randomUUID();
         UUID vehiculoId = UUID.randomUUID();
+        Vehiculo vehiculo = new Vehiculo();
+        vehiculo.setId(vehiculoId);
+        when(vehiculoRepository.findById(vehiculoId)).thenReturn(Optional.of(vehiculo));
         when(repository.existsByFkUserVehiculo_IdAndFkVehiculoUser_Id(usuarioId, vehiculoId)).thenReturn(true);
 
         assertThatThrownBy(() -> service.create(new UserVehiculoRequest(usuarioId, vehiculoId)))
@@ -84,6 +90,9 @@ class UserVehiculoServiceImplTest {
         UUID usuarioId = UUID.randomUUID();
         UUID vehiculoId = UUID.randomUUID();
 
+        Vehiculo vehiculo = new Vehiculo();
+        vehiculo.setId(vehiculoId);
+        when(vehiculoRepository.findById(vehiculoId)).thenReturn(Optional.of(vehiculo));
         when(repository.existsByFkUserVehiculo_IdAndFkVehiculoUser_Id(usuarioId, vehiculoId)).thenReturn(false);
         when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.empty());
 

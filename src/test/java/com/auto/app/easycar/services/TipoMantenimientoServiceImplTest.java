@@ -34,6 +34,9 @@ class TipoMantenimientoServiceImplTest {
     @Mock
     private VehiculoRepository vehiculoRepository;
 
+    @Mock
+    private AccesoVehiculoService acceso;
+
     @InjectMocks
     private TipoMantenimientoServiceImpl service;
 
@@ -55,11 +58,13 @@ class TipoMantenimientoServiceImplTest {
         when(repository.save(any(TipoMantenimiento.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
 
         TipoMantenimientoResponse response = service.create(new TipoMantenimientoRequest(
-                "Cambio de aceite", fecha, "Usar 5W-30", 50000, 1, vehiculoId));
+                "Cambio de aceite", fecha, "Usar 5W-30", 50000, 5000, null, 1, vehiculoId));
 
         assertThat(response.nombreMantenimiento()).isEqualTo("Cambio de aceite");
         assertThat(response.vehiculoId()).isEqualTo(vehiculoId);
         assertThat(response.kilometrajeObjetivo()).isEqualTo(50000);
+        assertThat(response.frecuenciaKm()).isEqualTo(5000);
+        assertThat(response.frecuenciaMeses()).isNull();
     }
 
     @Test
@@ -68,7 +73,7 @@ class TipoMantenimientoServiceImplTest {
         when(vehiculoRepository.findById(vehiculoId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.create(new TipoMantenimientoRequest(
-                "Cambio de aceite", new Date(), null, 1000, 1, vehiculoId)))
+                "Cambio de aceite", new Date(), null, 1000, null, null, 1, vehiculoId)))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining(vehiculoId.toString());
 
@@ -84,6 +89,7 @@ class TipoMantenimientoServiceImplTest {
         tipo.setTipoVista(2);
         tipo.setFkTipoMantenimiento(vehiculo(vehiculoId));
 
+        when(vehiculoRepository.findById(vehiculoId)).thenReturn(Optional.of(vehiculo(vehiculoId)));
         when(repository.findByFkTipoMantenimiento_Id(vehiculoId)).thenReturn(List.of(tipo));
 
         List<TipoMantenimientoResponse> resultado = service.findByVehiculo(vehiculoId);
@@ -98,5 +104,54 @@ class TipoMantenimientoServiceImplTest {
 
         assertThatThrownBy(() -> service.findById(99L))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void actualizarCambiaDeKilometrajeAFechaYDescartaElObjetivoEnKm() {
+        UUID vehiculoId = UUID.randomUUID();
+        TipoMantenimiento existente = new TipoMantenimiento();
+        existente.setId(7L);
+        existente.setNombreMantenimiento("Cambio de aceite");
+        existente.setKilometrajeObjetivo(50000);
+        existente.setTipoVista(1);
+        existente.setFkTipoMantenimiento(vehiculo(vehiculoId));
+        Date nuevaFecha = new Date();
+
+        when(repository.findById(7L)).thenReturn(Optional.of(existente));
+        when(vehiculoRepository.findById(vehiculoId)).thenReturn(Optional.of(vehiculo(vehiculoId)));
+        when(repository.save(any(TipoMantenimiento.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+
+        TipoMantenimientoResponse response = service.update(7L, new TipoMantenimientoRequest(
+                "Cambio de aceite", nuevaFecha, null, null, null, 6, 2, vehiculoId));
+
+        assertThat(response.tipoVista()).isEqualTo(2);
+        assertThat(response.fechaSiguienteMantenimiento()).isEqualTo(nuevaFecha);
+        assertThat(response.kilometrajeObjetivo()).isNull();
+        assertThat(response.frecuenciaMeses()).isEqualTo(6);
+        assertThat(response.frecuenciaKm()).isNull();
+    }
+
+    @Test
+    void actualizarCambiaDeFechaAKilometrajeYDescartaLaFecha() {
+        UUID vehiculoId = UUID.randomUUID();
+        TipoMantenimiento existente = new TipoMantenimiento();
+        existente.setId(8L);
+        existente.setNombreMantenimiento("Alineacion");
+        existente.setFechaSiguienteMantenimiento(new Date());
+        existente.setTipoVista(2);
+        existente.setFkTipoMantenimiento(vehiculo(vehiculoId));
+
+        when(repository.findById(8L)).thenReturn(Optional.of(existente));
+        when(vehiculoRepository.findById(vehiculoId)).thenReturn(Optional.of(vehiculo(vehiculoId)));
+        when(repository.save(any(TipoMantenimiento.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+
+        TipoMantenimientoResponse response = service.update(8L, new TipoMantenimientoRequest(
+                "Alineacion", new Date(), null, 42000, 7000, null, 1, vehiculoId));
+
+        assertThat(response.tipoVista()).isEqualTo(1);
+        assertThat(response.kilometrajeObjetivo()).isEqualTo(42000);
+        assertThat(response.frecuenciaKm()).isEqualTo(7000);
+        assertThat(response.frecuenciaMeses()).isNull();
+        assertThat(response.fechaSiguienteMantenimiento()).isNull();
     }
 }

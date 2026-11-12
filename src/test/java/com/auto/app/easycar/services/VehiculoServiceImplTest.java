@@ -8,6 +8,8 @@ import com.auto.app.easycar.entitis.Usuario;
 import com.auto.app.easycar.entitis.Vehiculo;
 import com.auto.app.easycar.exceptions.DuplicateResourceException;
 import com.auto.app.easycar.exceptions.ResourceNotFoundException;
+import com.auto.app.easycar.repositories.InvitacionVehiculoRepository;
+import com.auto.app.easycar.repositories.UserVehiculoRepository;
 import com.auto.app.easycar.repositories.VehiculoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +34,15 @@ class VehiculoServiceImplTest {
 
     @Mock
     private VehiculoRepository repository;
+
+    @Mock
+    private UserVehiculoRepository userVehiculoRepository;
+
+    @Mock
+    private InvitacionVehiculoRepository invitacionRepository;
+
+    @Mock
+    private AccesoVehiculoService acceso;
 
     @InjectMocks
     private VehiculoServiceImpl service;

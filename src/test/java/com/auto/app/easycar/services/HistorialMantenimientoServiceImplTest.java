@@ -6,6 +6,7 @@ import com.auto.app.easycar.entitis.HistorialMantenimientos;
 import com.auto.app.easycar.entitis.TipoMantenimiento;
 import com.auto.app.easycar.entitis.Usuario;
 import com.auto.app.easycar.entitis.Vehiculo;
+import com.auto.app.easycar.exceptions.AccesoDenegadoException;
 import com.auto.app.easycar.exceptions.ResourceNotFoundException;
 import com.auto.app.easycar.repositories.HistorialMantenimientosRepository;
 import com.auto.app.easycar.repositories.TipoMantenimientoRepository;
@@ -43,6 +44,9 @@ class HistorialMantenimientoServiceImplTest {
     @Mock
     private VehiculoRepository vehiculoRepository;
 
+    @Mock
+    private AccesoVehiculoService acceso;
+
     @InjectMocks
     private HistorialMantenimientoServiceImpl service;
 
@@ -59,8 +63,8 @@ class HistorialMantenimientoServiceImplTest {
         tipo.setId(7L);
 
         when(tipoMantenimientoRepository.findById(7L)).thenReturn(Optional.of(tipo));
-        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
         when(vehiculoRepository.findById(vehiculoId)).thenReturn(Optional.of(vehiculo));
+        when(acceso.usuarioActual()).thenReturn(usuario);
         when(repository.save(any(HistorialMantenimientos.class)))
                 .thenAnswer(invocacion -> invocacion.getArgument(0));
 
@@ -78,8 +82,6 @@ class HistorialMantenimientoServiceImplTest {
         UUID usuarioId = UUID.randomUUID();
         UUID vehiculoId = UUID.randomUUID();
 
-        when(tipoMantenimientoRepository.findById(7L)).thenReturn(Optional.of(new TipoMantenimiento()));
-        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(new Usuario()));
         when(vehiculoRepository.findById(vehiculoId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.create(new HistorialMantenimientoRequest(
@@ -91,15 +93,50 @@ class HistorialMantenimientoServiceImplTest {
     }
 
     @Test
-    void fallaSiElUsuarioNoExiste() {
+    void rechazaRegistrarHistorialANombreDeOtroUsuario() {
         UUID usuarioId = UUID.randomUUID();
-        when(tipoMantenimientoRepository.findById(7L)).thenReturn(Optional.of(new TipoMantenimiento()));
-        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.empty());
+        UUID otroUsuarioId = UUID.randomUUID();
+        UUID vehiculoId = UUID.randomUUID();
+
+        Usuario yo = new Usuario();
+        yo.setId(usuarioId);
+        Vehiculo vehiculo = new Vehiculo();
+        vehiculo.setId(vehiculoId);
+
+        when(vehiculoRepository.findById(vehiculoId)).thenReturn(Optional.of(vehiculo));
+        when(acceso.usuarioActual()).thenReturn(yo);
 
         assertThatThrownBy(() -> service.create(new HistorialMantenimientoRequest(
-                new Date(), 1000, null, 7L, usuarioId, UUID.randomUUID())))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining(usuarioId.toString());
+                new Date(), 1000, null, 7L, otroUsuarioId, vehiculoId)))
+                .isInstanceOf(AccesoDenegadoException.class);
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void rechazaFechaFutura() {
+        UUID usuarioId = UUID.randomUUID();
+        UUID vehiculoId = UUID.randomUUID();
+
+        Usuario usuario = new Usuario();
+        usuario.setId(usuarioId);
+        Vehiculo vehiculo = new Vehiculo();
+        vehiculo.setId(vehiculoId);
+        TipoMantenimiento tipo = new TipoMantenimiento();
+        tipo.setId(7L);
+
+        when(vehiculoRepository.findById(vehiculoId)).thenReturn(Optional.of(vehiculo));
+        when(acceso.usuarioActual()).thenReturn(usuario);
+        when(tipoMantenimientoRepository.findById(7L)).thenReturn(Optional.of(tipo));
+
+        Date manana = new Date(System.currentTimeMillis() + 86_400_000L);
+
+        assertThatThrownBy(() -> service.create(new HistorialMantenimientoRequest(
+                manana, 1000, null, 7L, usuarioId, vehiculoId)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("futura");
+
+        verify(repository, never()).save(any());
     }
 
     @Test

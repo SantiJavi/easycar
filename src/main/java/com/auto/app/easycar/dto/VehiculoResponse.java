@@ -32,6 +32,10 @@ public record VehiculoResponse(
         List<TipoMantenimientoResumen> tiposMantenimiento,
 
         @Schema(description = "Historial de mantenimientos del vehiculo (Vehiculo -> Historial, sin vuelta)")
-        List<HistorialResumen> historial
+        List<HistorialResumen> historial,
+
+        @Schema(description = "Rol del usuario autenticado sobre el vehiculo",
+                example = "PROPIETARIO", allowableValues = {"PROPIETARIO", "COLABORADOR", "LECTURA"})
+        String rol
 ) {
 }
